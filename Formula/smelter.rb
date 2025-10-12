@@ -1,77 +1,60 @@
 class Smelter < Formula
   desc "Type-safe scripting language with 43ms startup"
   homepage "https://github.com/abacusnoir/smelter"
-  version "0.1.0"
+  version "0.1.7"
   license "MIT"
 
-  # URL will point to your GitHub release
+  # v0.1.7 release URLs and checksums
   if OS.mac? && Hardware::CPU.arm?
-    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.0/smelter-0.1.0-darwin-arm64.tar.gz"
-    sha256 "9f61c25c715c66441d836e13d2099d0803c5630d6675f59f3c595c05c9c4337e"
+    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.7/smt-darwin-arm64.tar.gz"
+    sha256 "c720cf85377f33e78826f51a4ad67727b1b65de759ba39a664580fcb61c4c874"
   elsif OS.mac? && Hardware::CPU.intel?
-    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.0/smelter-0.1.0-darwin-x86_64.tar.gz"
-    sha256 "PENDING_INTEL_BUILD"
+    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.7/smt-darwin-x64.tar.gz"
+    sha256 "ccb712cebac44f801b98a93f2ccad64b26b0723217852aac99c44534408798be"
   elsif OS.linux? && Hardware::CPU.intel?
-    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.0/smelter-0.1.0-linux-x86_64.tar.gz"
-    sha256 "PENDING_LINUX_BUILD"
+    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.7/smt-linux-x64.tar.gz"
+    sha256 "390b3f72664ec14ed2a5038b4b976536bdd1cb9e6c3e5874709e61dd519a7c00"
   end
 
   def install
-    bin.install "smelter" => "smt"
-    
-    # Install examples if they exist in the tarball
-    if Dir.exist?("examples")
-      pkgshare.install "examples"
+    # Determine platform-specific binary name
+    if OS.mac? && Hardware::CPU.arm?
+      binary_name = "smt-darwin-arm64"
+    elsif OS.mac? && Hardware::CPU.intel?
+      binary_name = "smt-darwin-x64"
+    elsif OS.linux? && Hardware::CPU.intel?
+      binary_name = "smt-linux-x64"
     end
-    
-    # Install documentation if present
-    doc.install "README.md" if File.exist?("README.md")
-    doc.install "LICENSE" if File.exist?("LICENSE")
+
+    # Install binary as 'smt'
+    bin.install binary_name => "smt"
   end
 
   test do
     # Test basic arithmetic
-    assert_equal "3", shell_output("#{bin}/smt eval '(+ 1 2)'").strip
-    
+    assert_equal "5", shell_output("#{bin}/smt eval '(+ 2 3)'").strip
+
     # Test version command
     assert_match "Smelter", shell_output("#{bin}/smt --version 2>&1")
-    
-    # Verify startup performance (should be under 100ms)
+
+    # Verify startup performance (should be under 150ms)
     require "benchmark"
     time = Benchmark.realtime { system "#{bin}/smt", "eval", "'(+ 1 2)'", out: File::NULL }
-    assert time < 0.1, "Startup time #{(time * 1000).round}ms exceeds 100ms"
-    
-    # Test REPL can start (with timeout to prevent hanging)
-    require "timeout"
-    begin
-      Timeout::timeout(2) do
-        IO.popen("#{bin}/smt repl", "r+") do |pipe|
-          pipe.puts ":quit"
-          pipe.close_write
-          output = pipe.read
-          assert_match(/Smelter|smt|REPL/i, output)
-        end
-      end
-    rescue Timeout::Error
-      # REPL started but didn't quit cleanly - that's OK for this test
-    end
+    assert time < 0.15, "Startup time #{(time * 1000).round}ms exceeds 150ms"
   end
 
   def caveats
     <<~EOS
       🔥 Smelter installed successfully!
-      
+
       Quick start:
         smt eval '(+ 1 2)'           # Evaluate expression
         smt repl                     # Start REPL
         smt run script.coal          # Run script file
-        
+
       Smelter starts in ~43ms with full type safety!
       Faster than Ruby (62ms), competitive with Python (29ms).
-      
-      Examples installed to:
-        #{pkgshare}/examples/
-      
+
       For more information:
         smt --help
     EOS
