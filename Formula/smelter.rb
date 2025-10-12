@@ -30,19 +30,6 @@ class Smelter < Formula
     bin.install binary_name => "smt"
   end
 
-  test do
-    # Test basic arithmetic
-    assert_equal "5", shell_output("#{bin}/smt eval '(+ 2 3)'").strip
-
-    # Test version command
-    assert_match "Smelter", shell_output("#{bin}/smt --version 2>&1")
-
-    # Verify startup performance (should be under 150ms)
-    require "benchmark"
-    time = Benchmark.realtime { system "#{bin}/smt", "eval", "'(+ 1 2)'", out: File::NULL }
-    assert time < 0.15, "Startup time #{(time * 1000).round}ms exceeds 150ms"
-  end
-
   def caveats
     <<~EOS
       🔥 Smelter installed successfully!
@@ -58,5 +45,18 @@ class Smelter < Formula
       For more information:
         smt --help
     EOS
+  end
+
+  test do
+    # Test basic arithmetic
+    assert_equal "5", shell_output("#{bin}/smt eval '(+ 2 3)'").strip
+
+    # Test version command
+    assert_match "Smelter", shell_output("#{bin}/smt --version 2>&1")
+
+    # Verify startup performance (should be under 150ms)
+    require "benchmark"
+    time = Benchmark.realtime { system "#{bin}/smt", "eval", "'(+ 1 2)'", out: File::NULL }
+    assert time < 0.15, "Startup time #{(time * 1000).round}ms exceeds 150ms"
   end
 end
