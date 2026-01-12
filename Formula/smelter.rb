@@ -1,19 +1,19 @@
 class Smelter < Formula
-  desc "Type-safe scripting language with 43ms startup"
+  desc "Lisp scripts that just work - Coalton or Common Lisp, 43ms startup"
   homepage "https://github.com/abacusnoir/smelter"
-  version "0.1.7"
+  version "0.2.0"
   license "MIT"
 
-  # v0.1.7 release URLs and checksums
+  # v0.2.0 release URLs and checksums
   if OS.mac? && Hardware::CPU.arm?
-    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.7/smt-darwin-arm64.tar.gz"
-    sha256 "c720cf85377f33e78826f51a4ad67727b1b65de759ba39a664580fcb61c4c874"
+    url "https://github.com/abacusnoir/smelter/releases/download/v0.2.0/smt-darwin-arm64.tar.gz"
+    sha256 "4b6fae04ec17d022dd7d983ac33aa284a78bf72088417f5f003cfa0a5b7d2b1b"
   elsif OS.mac? && Hardware::CPU.intel?
-    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.7/smt-darwin-x64.tar.gz"
-    sha256 "ccb712cebac44f801b98a93f2ccad64b26b0723217852aac99c44534408798be"
+    url "https://github.com/abacusnoir/smelter/releases/download/v0.2.0/smt-darwin-x64.tar.gz"
+    sha256 "eba1a7a1c2dff9f03779e268ea301221f255594c54d39727d5fb34f82777bc32"
   elsif OS.linux? && Hardware::CPU.intel?
-    url "https://github.com/abacusnoir/smelter/releases/download/v0.1.7/smt-linux-x64.tar.gz"
-    sha256 "390b3f72664ec14ed2a5038b4b976536bdd1cb9e6c3e5874709e61dd519a7c00"
+    url "https://github.com/abacusnoir/smelter/releases/download/v0.2.0/smt-linux-x64.tar.gz"
+    sha256 "27a590f5fcb6da18705ccb7efd7a6e78d3725b88da3ce9ea442a91c155ba7925"
   end
 
   def install
@@ -28,19 +28,25 @@ class Smelter < Formula
 
     # Install binary as 'smt'
     bin.install binary_name => "smt"
+    # Create smt-cl symlink for CL mode shebang support
+    bin.install_symlink "smt" => "smt-cl"
   end
 
   def caveats
     <<~EOS
       🔥 Smelter installed successfully!
 
-      Quick start:
+      Coalton (type-safe):
+        smt run script.coal          # Run Coalton script
         smt eval '(+ 1 2)'           # Evaluate expression
         smt repl                     # Start REPL
-        smt run script.coal          # Run script file
 
-      Smelter starts in ~43ms with full type safety!
-      Faster than Ruby (62ms), competitive with Python (29ms).
+      Common Lisp:
+        smt cl run script.lisp       # Run CL script
+        smt cl eval '(format nil "~A" 42)'
+        smt-cl script.lisp           # Shortcut (for shebangs)
+
+      Same binary. ~43ms startup. Types optional.
 
       For more information:
         smt --help
@@ -48,8 +54,14 @@ class Smelter < Formula
   end
 
   test do
-    # Test basic arithmetic
+    # Test Coalton mode
     assert_equal "5", shell_output("#{bin}/smt eval '(+ 2 3)'").strip
+
+    # Test CL mode
+    assert_equal "42", shell_output("#{bin}/smt cl eval '(* 6 7)'").strip
+
+    # Test smt-cl symlink
+    assert_equal "10", shell_output("#{bin}/smt-cl eval '(+ 3 7)'").strip
 
     # Test version command
     assert_match "Smelter", shell_output("#{bin}/smt --version 2>&1")
